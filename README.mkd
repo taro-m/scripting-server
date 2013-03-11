@@ -1,0 +1,54 @@
+# Scripting Server
+
+Start server first:
+
+    $ node server/main.js
+
+Regsiter scripts:
+
+```
+$ curl -i -X PUT 'http://127.0.0.1:8080/scripts' --data-binary @test/hello.js
+HTTP/1.1 201 Created
+Content-Type: text/plain
+Location: http://127.0.0.1:8080/scripts/33072c61bbad02c4810baa607e9715482a356328
+Date: Mon, 11 Mar 2013 09:31:43 GMT
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+Registered as 33072c61bbad02c4810baa607e9715482a356328
+```
+
+```
+$ curl -i -X PUT http://127.0.0.1:8080/scripts --data-binary @test/add_average.js
+HTTP/1.1 201 Created
+Content-Type: text/plain
+Location: http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe
+Date: Mon, 11 Mar 2013 09:32:45 GMT
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+Registered as 6f4c464a44605d9ceef249da70c9bcbf9553a8fe
+```
+
+Invoke scripts:
+
+Without any arguments.
+
+```
+$ curl -i http://127.0.0.1:8080/scripts/33072c61bbad02c4810baa607e9715482a356328
+HTTP/1.1 200 OK
+Content-Type: application/json
+Date: Mon, 11 Mar 2013 09:40:42 GMT
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+"HELLO WORLD"
+```
+
+With an argument.
+
+    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj1.txt
+
+    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj2.txt
+
+    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj3.txt

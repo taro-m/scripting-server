@@ -7,7 +7,7 @@ var vm = require('vm');
 var crypto = require('crypto');
 
 var server = http.createServer();
-server.addListener('request', processRequest);
+server.addListener('request', handleRequest);
 server.listen(port);
 
 var scriptTable = {};
@@ -23,6 +23,16 @@ function getHash(data) {
     return shasum.digest('hex');
 }
 
+function readAll(stream, callback) {
+    var body = '';
+    stream.on('data', function(chunk) {
+        body += chunk;
+    });
+    stream.on('end', function() {
+        callback(body);
+    });
+}
+
 function respondError(res, what) {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     if (what) {
@@ -32,42 +42,39 @@ function respondError(res, what) {
     }
 }
 
-function processRequest(req, res) {
+function handleRequest(req, res) {
     var m;
     if (req.url === '/scripts' || req.url === '/scripts/') {
-        processRegister(req, res);
+        handleRegister(req, res);
     } else if ((m = req.url.match(/^\/scripts\/([^\/]+)$/))) {
-        processInvoke(req, res, m[1]);
+        handleInvoke(req, res, m[1]);
     } else {
         respondError(res, 'entry point');
     }
 }
 
-function processRegister(req, res) {
+function handleRegister(req, res) {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     if (req.method === 'PUT') {
-        var body = '';
-        req.on('data', function(chunk) {
-            body += chunk;
-        });
-        req.on('end', function() {
+        readAll(req, function(body) {
+            var id;
             try {
-                var id = registerScript(body);
-                if (id) {
-                    res.writeHead(201, {
-                        'Content-Type': 'text/plain',
-                        'Location': getURL('/scripts/' + id),
-                    });
-                    res.end('Registered as ' + id + '\n');
-                } else {
-                    respondError(res, 'valid Script ID');
-                }
+                id = registerScript(body);
             } catch (e) {
+                // ERROR: script compilation error.
                 respondError(res, e);
+                return;
             }
+            res.writeHead(201, {
+                'Content-Type': 'text/plain',
+                'Location': getURL('/scripts/' + id),
+                'X-Kii-ScriptID': id
+            });
+            res.end('Registered as ' + id + '\n');
         });
     } else {
-        respondError(res, 'valid method in processRegister');
+        // ERROR: unsupported HTTP method.
+        respondError(res, 'valid method in handleRegister');
     }
 }
 
@@ -79,28 +86,27 @@ function registerScript(str) {
     return id;
 }
 
-function processInvoke(req, res, sid) {
+function handleInvoke(req, res, sid) {
     if (sid in scriptTable) {
         var script = scriptTable[sid];
         if (req.method === 'POST') {
-            var body = '';
-            req.on('data', function(chunk) {
-                body += chunk;
-            });
-            req.on('end', function(end) {
+            readAll(req, function(body) {
+                var arg = {}
                 try {
-                    var arg = JSON.parse(body);
-                    invokeScript(res, script, arg);
+                    arg = JSON.parse(body)
                 } catch (e) {
+                    // ERROR: invalid argument as JSON.
                     respondError(res, e);
+                    return;
                 }
+                invokeScript(res, script, arg);
             });
-        } else if (req.method === 'GET') {
-            invokeScript(res, script, null);
         } else {
+            // ERROR: unsupported HTTP method.
             respondError(res, 'valid method');
         }
     } else {
+        // ERROR: script is not registered.
         respondError(res, 'valid script');
     }
 }
@@ -116,11 +122,13 @@ function invokeScript(res, script, arg) {
     };
     try {
         script.runInNewContext(context);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(context._retval, null, 2));
     } catch (e) {
+        // ERROR: script execution error.
         respondError(res, e);
+        return;
     }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(context._retval, null, 2));
 }
 
 function API_createObject(data) {

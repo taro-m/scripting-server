@@ -1,8 +1,14 @@
 # Scripting Server
 
-Start server first:
+## Tutorial
+
+Start server at first:
 
     $ node server/main.js
+
+       or
+
+    $ node server/main2.js
 
 Regsiter scripts:
 
@@ -52,3 +58,4 @@ With an argument.
     $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj2.txt
 
     $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj3.txt
+    

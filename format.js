@@ -13,23 +13,26 @@ var ast = UglifyJS.parse(code, {
 
 var strings = {};
 
-function newStatemnt(node) {
-    return UglifyJS.parse('$("'+node.constructor.name+'");');
+function newStatemnt() {
+    return UglifyJS.parse('$()');
 }
 
 var tt = new UglifyJS.TreeTransformer(null, function(node) {
     if (node instanceof UglifyJS.AST_Block) {
         var body = [];
-        body.push(newStatemnt(node));
         for (var i = 0; i < node.body.length; ++i) {
-            body.push(newStatemnt(node.body[i]));
+            body.push(newStatemnt());
             body.push(node.body[i]);
         }
-        body.push(newStatemnt(node));
         node.body = body;
         return node;
+    } else if (node instanceof UglifyJS.AST_StatementWithBody
+	    && !(node.body instanceof UglifyJS.AST_Block)) {
+	node.body = UglifyJS.parse(
+	    '{$();'+node.body.print_to_string()+'}');
+	return node;
     }
 });
 var ast2 = ast.transform(tt);
 
-console.log(ast2.print_to_string({ beautify: true }));
+console.log(ast2.print_to_string({ beautify: false }));

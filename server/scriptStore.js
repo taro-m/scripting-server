@@ -3,6 +3,7 @@
 var vm = require('vm');
 var crypto = require('crypto');
 var response = require('./response');
+var weaver = require('./weaver');
 var config = require('./config');
 
 var scriptTable = {};
@@ -11,11 +12,15 @@ exports.register = function(rawScript, callback) {
     var id = getHash(rawScript);
     var script;
     try {
-        script = vm.createScript(convertScript(rawScript));
+	var weaved = convertScript(rawScript);
+        script = vm.createScript(weaved);
     } catch (err) {
         if (err instanceof SyntaxError) {
             throw new response.ScriptCompileError(err);
         }
+    }
+    if (config.DEBUG) {
+	console.log('Register id:' + id + ' script:' + weaved);
     }
     scriptTable[id] = script;
     process.nextTick(function() {
@@ -31,7 +36,15 @@ exports.invoke = function(id, arg, callback) {
     var context = {
         '_arg': arg,
         '_retval': {},
+	'_count': 0,
         'API': getAPI(),
+    };
+    var step = 0;
+    context._sys = function() {
+	// FIXME:
+	if (++step > config.MAX_STEP) {
+	    throw new Error("over count");
+	}
     }
     try {
         script.runInNewContext(context);
@@ -50,8 +63,8 @@ function getHash(data) {
 }
 
 function convertScript(rawScript) {
-    // TODO:
-    return '_retval=(function(ARG){' + rawScript + '})(_arg)';
+    var weaved = weaver.weave(rawScript, '_sys');
+    return '_retval=(function(ARG){' + weaved + '})(_arg)';
 }
 
 function getAPI() {

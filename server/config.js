@@ -6,6 +6,8 @@ exports.VENDOR = 'Me'
 
 exports.PORT = 8080;
 
+exports.MAX_STEP = 1000;
+
 exports.getXName = function(name) {
     return 'X-' + exports.VENDOR + '-' + name;
 }

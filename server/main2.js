@@ -26,21 +26,17 @@ function handleRequest(req, res) {
     });
 }
 
-function getXName(name) {
-    return 'X-' + config.VENDOR + '-' + name;
-}
-
 function getHead(value) {
-    var head = value.head;
+    var head = JSON.parse(JSON.stringify(value.head));
     if (config.DEBUG) {
-        head[getXName('ResponseName')] = value.name;
+        head[config.getXName('ResponseName')] = value.name;
     }
     return head;
 }
 
 function respond(d, res, value) {
     res.writeHead(value.code, getHead(value));
-    res.end(JSON.stringify(value.body, null, 2));
+    res.end(JSON.stringify(value.body, null, (config.DEBUG ? 2 : 0)));
     res.on('close', function() {
         d.dispose();
     });
@@ -49,6 +45,7 @@ function respond(d, res, value) {
 function handleError(d, er, req, res) {
     try {
         if (!(er instanceof response.Error)) {
+            console.error(er.stack);
             er = new response.UnexpectedError(er);
         }
         // respond with JSON style contents.
@@ -64,7 +61,7 @@ function handleMain(d, req, res) {
     if (req.url === '/scripts' || req.url === '/scripts/') {
         handleRegisterScript(d, req, res);
     } else if ((m = req.url.match(/^\/scripts\/([^\/]+)$/))) {
-        handleInvokeScript(d, req, res);
+        handleInvokeScript(d, req, res, m[1]);
     } else {
         throw new response.InvalidRequestError;
     }
@@ -72,9 +69,15 @@ function handleMain(d, req, res) {
 
 function readAll(stream, callback) {
     var body = '';
-    stream.on('data', function(chunk) {
-        body += chunk;
-    });
+    if ('read' in stream) {
+        stream.on('readable', function() {
+            body += stream.read();
+        });
+    } else {
+        stream.on('data', function(chunk) {
+            body += chunk;
+        });
+    }
     stream.on('end', function() {
         callback(body);
     });
@@ -91,7 +94,7 @@ function handleRegisterScript(d, req, res) {
     }));
 }
 
-function handleInvokeScript(d, req, res) {
+function handleInvokeScript(d, req, res, id) {
     if (req.method !== 'POST') {
         throw new response.InvalidMethodError;
     }
@@ -101,7 +104,4 @@ function handleInvokeScript(d, req, res) {
             respond(d, res, value);
         }));
     }));
-}
-
-function loopHook() {
 }

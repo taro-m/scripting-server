@@ -5,3 +5,7 @@ exports.DEBUG = true;
 exports.VENDOR = 'Me'
 
 exports.PORT = 8080;
+
+exports.getXName = function(name) {
+    return 'X-' + exports.VENDOR + '-' + name;
+}

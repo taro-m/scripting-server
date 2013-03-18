@@ -2,7 +2,6 @@
 
 var http = require('http');
 var domain = require('domain');
-var vm = require('vm');
 var response = require('./response');
 var scriptStore = require('./scriptStore');
 var config = require('./config');

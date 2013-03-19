@@ -11,3 +11,9 @@ exports.MAX_STEP = 1000;
 exports.getXName = function(name) {
     return 'X-' + exports.VENDOR + '-' + name;
 }
+
+exports.getAPI = function(session) {
+    // TODO: return API functions.
+    return {
+    };
+}

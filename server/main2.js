@@ -6,6 +6,10 @@ var response = require('./response');
 var scriptStore = require('./scriptStore');
 var config = require('./config');
 
+if (config.DEBUG) {
+    scriptStore.DEBUG = true;
+}
+
 var server = http.createServer();
 server.addListener('request', handleRequest);
 server.listen(config.PORT);
@@ -16,8 +20,8 @@ function handleRequest(req, res) {
     d.add(req);
     d.add(res);
 
-    d.on('error', function(er) {
-        handleError(d, er, req, res);
+    d.on('error', function(err) {
+        handleError(d, err, req, res);
     });
 
     d.run(function() {
@@ -33,6 +37,10 @@ function getHead(value) {
     return head;
 }
 
+function getSessionId(req) {
+    return req.headers[config.getXName('SessionID').toLowerCase()];
+}
+
 function respond(d, res, value) {
     res.writeHead(value.code, getHead(value));
     res.end(JSON.stringify(value.body, null, (config.DEBUG ? 2 : 0)));
@@ -41,14 +49,14 @@ function respond(d, res, value) {
     });
 }
 
-function handleError(d, er, req, res) {
+function handleError(d, err, req, res) {
     try {
-        if (!(er instanceof response.Error)) {
-            console.error(er.stack);
-            er = new response.UnexpectedError(er);
+        if (!(err instanceof response.Error)) {
+            console.error(err.stack);
+            err = new response.UnexpectedError(err);
         }
         // respond with JSON style contents.
-        respond(d, res, er);
+        respond(d, res, err);
     } catch (er2) {
         console.error('Error handling error', er2, req.url);
         d.dispose();
@@ -60,7 +68,9 @@ function handleMain(d, req, res) {
     if (req.url === '/scripts' || req.url === '/scripts/') {
         handleRegisterScript(d, req, res);
     } else if ((m = req.url.match(/^\/scripts\/([^\/]+)$/))) {
-        handleInvokeScript(d, req, res, m[1]);
+        var scriptId = m[1];
+        var sessionId = getSessionId(req);
+        handleInvokeScript(d, req, res, scriptId, sessionId);
     } else {
         throw new response.InvalidRequestError;
     }
@@ -83,24 +93,37 @@ function readAll(stream, callback) {
 }
 
 function handleRegisterScript(d, req, res) {
-    if (req.method !== 'PUT') {
+    if (req.method === 'PUT') {
+        readAll(req, d.bind(function(body) {
+            scriptStore.register(body, d.bind(function(value) {
+                respond(d, res, value);
+            }));
+        }));
+    } else {
         throw new response.InvalidMethodError;
     }
-    readAll(req, d.bind(function(body) {
-        scriptStore.register(body, d.bind(function(value) {
-            respond(d, res, value);
-        }));
-    }));
 }
 
-function handleInvokeScript(d, req, res, id) {
-    if (req.method !== 'POST') {
+function handleInvokeScript(d, req, res, scriptId, sessionId) {
+    if (req.method === 'POST') {
+        readAll(req, d.bind(function(body) {
+            var arg = JSON.parse(body);
+            scriptStore.invoke(scriptId, arg, {
+                max_step: config.MAX_STEP,
+                on_init_context: d.bind(function(context) {
+                    initContext(sessionId, context);
+                }),
+                on_finish: d.bind(function(value) {
+                    respond(d, res, value);
+                }),
+            });
+        }));
+    } else {
         throw new response.InvalidMethodError;
     }
-    readAll(req, d.bind(function(body) {
-        var arg = JSON.parse(body);
-        scriptStore.invoke(id, arg, d.bind(function(value) {
-            respond(d, res, value);
-        }));
-    }));
+}
+
+function initContext(sessionId, context) {
+    context.API = config.getAPI(sessionId);
+    //context.eval = function() { throw new Error('eval is not defined'); }
 }

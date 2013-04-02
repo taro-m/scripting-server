@@ -57,6 +57,8 @@ With an argument.
 
 ## Develop
 
+### Run server in developing mode.
+
 Use node-dev module:
 
     $ npm install -g node-dev

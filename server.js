@@ -1,1 +1,1 @@
-require('./lib/server_main.js')
+require('./lib/scripting-server.js');

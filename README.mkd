@@ -4,16 +4,12 @@
 
 Start server at first:
 
-    $ node server/main.js
-
-       or
-
-    $ node server/main2.js
+    $ node server.js
 
 Regsiter scripts:
 
 ```
-$ curl -i -X PUT 'http://127.0.0.1:8080/scripts' --data-binary @test/hello.js
+$ curl -i -X PUT 'http://127.0.0.1:8080/scripts' --data-binary @old/test/hello.js
 HTTP/1.1 201 Created
 Content-Type: text/plain
 Location: http://127.0.0.1:8080/scripts/33072c61bbad02c4810baa607e9715482a356328
@@ -25,7 +21,7 @@ Registered as 33072c61bbad02c4810baa607e9715482a356328
 ```
 
 ```
-$ curl -i -X PUT http://127.0.0.1:8080/scripts --data-binary @test/add_average.js
+$ curl -i -X PUT http://127.0.0.1:8080/scripts --data-binary @old/test/add_average.js
 HTTP/1.1 201 Created
 Content-Type: text/plain
 Location: http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe
@@ -53,9 +49,18 @@ Transfer-Encoding: chunked
 
 With an argument.
 
-    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj1.txt
+    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @old/test/obj1.txt
 
-    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj2.txt
+    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @old/test/obj2.txt
 
-    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @test/obj3.txt
-    
+    $ curl -i http://127.0.0.1:8080/scripts/6f4c464a44605d9ceef249da70c9bcbf9553a8fe -X POST --data-binary @old/test/obj3.txt
+
+## Develop
+
+Use node-dev module:
+
+    $ npm install -g node-dev
+
+Then start server.js:
+
+    $ node-dev server.js

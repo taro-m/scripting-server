@@ -1,0 +1,22 @@
+{
+  "name": "scripting-server",
+  "version": "0.2.0",
+  "description": "## Tutorial",
+  "main": "server.js",
+  "dependencies": {
+    "uglify-js": "~2.2.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-work:taro-m/scripting-server.git"
+  },
+  "author": "MURAOKA Taro",
+  "license": "BSD",
+  "readmeFilename": "README.mkd",
+  "gitHead": "b61bfc9d647f6429aee68c206aa216260cdd09cc"
+}

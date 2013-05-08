@@ -1,5 +1,17 @@
 # Scripting Server
 
+## Install
+
+Choose one of:
+
+    $ git clone git@github.com:koron/night.git
+    $ cd night
+    $ npm install
+
+or:
+
+    $ npm install git@github.com:koron/night.git
+
 ## Tutorial
 
 Start server at first:

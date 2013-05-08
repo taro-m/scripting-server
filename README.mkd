@@ -75,6 +75,6 @@ Use node-dev module:
 
     $ npm install -g node-dev
 
-Then start server.js:
+Then start server.js as below:
 
     $ node-dev server.js
